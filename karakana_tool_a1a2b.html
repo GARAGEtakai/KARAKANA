@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>カラカナ移転 資金計画ツール（A1・A2＋B統合版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF0EA;
+    --ink:#20262B;
+    --ink-soft:#5B6560;
+    --line:#C7CBBE;
+    --card:#F7F7F2;
+    --fixed-bg:#E7E5DC; --fixed-text:#5B5A52;
+    --cut-bg:#F1DCD4; --cut-text:#7A3820;
+    --nego-bg:#FAEEDA; --nego-text:#7A4E0B;
+    --good:#3F6B4F; --warn:#A6432B;
+    --good-bg:#DCE7DE; --good-text:#284a34;
+    --warn-bg:#F1DCD4; --warn-text:#7A3820;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;font-size:13.5px;line-height:1.7;padding-bottom:80px;}
+  .wrap{max-width:1020px;margin:0 auto;padding:0 20px;}
+  header.top{padding:34px 20px 24px;border-bottom:1px solid var(--line);}
+  h1{font-family:'Shippori Mincho',serif;font-weight:700;font-size:24px;margin:0;}
+  .sub{color:var(--ink-soft);font-size:12.5px;margin-top:6px;}
+
+  .tab-nav{display:flex;gap:6px;max-width:1020px;margin:0 auto;padding:16px 20px 0;}
+  .tab-btn{font-family:'Noto Sans JP',sans-serif;font-size:13.5px;padding:9px 20px;border:1px solid var(--line);border-bottom:none;background:#fff;cursor:pointer;border-radius:2px 2px 0 0;color:var(--ink-soft);}
+  .tab-btn.active{background:var(--card);color:var(--ink);font-weight:700;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  section{margin-top:40px;}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;}
+  .sec-no{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--warn);border:1px solid var(--warn);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .sec-title{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700;}
+
+  .pool-card,.card{background:var(--card);border:1px solid var(--line);border-radius:2px;padding:18px 20px;margin-bottom:16px;}
+  .pool-title{font-weight:700;font-size:14.5px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;}
+  .pool-title .amt{font-family:'JetBrains Mono',monospace;font-size:16px;}
+  .card-title{font-weight:700;font-size:14px;margin-bottom:10px;}
+
+  .group-head{font-weight:700;font-size:13px;margin:14px 0 4px;padding-top:8px;border-top:1px solid var(--line);}
+  .group-head:first-child{border-top:none;padding-top:0;}
+  .subgroup-head{font-size:11.5px;color:var(--ink-soft);margin:8px 0 2px;}
+
+  table.ledger{width:100%;border-collapse:collapse;}
+  table.ledger td,table.ledger th{padding:5px 6px;border-bottom:1px dashed var(--line);vertical-align:middle;font-size:13px;}
+  table.ledger th{text-align:left;font-size:11.5px;color:var(--ink-soft);font-weight:500;}
+  table.ledger tr:last-child td{border-bottom:none;}
+  table.ledger tr.total td{border-top:1px solid var(--ink);border-bottom:none;font-weight:700;padding-top:8px;}
+  td.no-col{width:26px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);text-align:right;padding-right:2px;}
+  td.badge-col{width:74px;}
+  td.chk-col{width:26px;}
+  td.name-col{width:auto;}
+  td.amt-col{width:120px;text-align:right;}
+
+  .badge{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:3px;white-space:nowrap;}
+  .badge-toggle{cursor:pointer;user-select:none;}
+  .badge-toggle:hover{filter:brightness(0.92);}
+  .src-tag{display:inline-block;margin-left:8px;font-size:10.5px;color:var(--ink-soft);border:1px solid var(--line);border-radius:3px;padding:1px 6px;}
+  .badge.fixed{background:var(--fixed-bg);color:var(--fixed-text);}
+  .badge.cut{background:var(--cut-bg);color:var(--cut-text);}
+  .badge.nego{background:var(--nego-bg);color:var(--nego-text);}
+
+  input[type=checkbox]{accent-color:var(--good);width:14px;height:14px;cursor:pointer;}
+  input.amt{width:104px;text-align:right;font-family:'JetBrains Mono',monospace;border:none;border-bottom:1px solid var(--line);background:transparent;padding:2px;font-size:13px;color:var(--ink);}
+  input.amt:focus{outline:none;border-bottom:1px solid var(--warn);}
+  input.amt:disabled{border-bottom:1px solid transparent;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;}
+  tr.off{opacity:.35;}
+
+  .cat-subtotals{display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap;}
+  .cat-subtotals span b{color:var(--ink);font-family:'JetBrains Mono',monospace;}
+
+  .fund-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);}
+  .fund-row:last-child{border-bottom:none;}
+  .fund-row .label{color:var(--ink-soft);font-size:13px;}
+  input.fund-amt{width:130px;text-align:right;font-family:'JetBrains Mono',monospace;border:1px solid var(--line);padding:5px 8px;font-size:13.5px;background:#fff;}
+
+  .alloc-box{background:#fff;border:1px solid var(--line);padding:12px 14px;margin-top:6px;}
+  .alloc-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0;}
+  .alloc-row label{font-size:12.5px;color:var(--ink-soft);}
+
+  .highlight-box{background:#DCE6F1;border:1px solid #A9C2DB;border-radius:2px;padding:16px 18px;margin-top:14px;}
+  .highlight-label{font-size:12.5px;color:#2A4D74;}
+  .highlight-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#1F3A57;margin-top:4px;}
+  .highlight-breakdown{display:flex;gap:20px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed #A9C2DB;font-size:12.5px;color:#2A4D74;}
+  .highlight-breakdown b{font-family:'JetBrains Mono',monospace;font-size:19px;}
+
+  .banner{border-left:3px solid var(--warn);background:var(--cut-bg);padding:8px 12px;font-size:12.5px;color:#6b2c1c;margin-top:8px;}
+  .banner.good{border-left-color:var(--good);background:var(--good-bg);color:var(--good-text);}
+
+  .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;}
+  .result-card{background:#fff;border:1px solid var(--line);padding:16px;text-align:center;}
+  .result-card .label{font-size:12px;color:var(--ink-soft);}
+  .result-card .value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;margin-top:6px;}
+  .value.plus{color:var(--good);}
+  .value.minus{color:var(--warn);}
+
+  #userGate{position:fixed;inset:0;background:var(--paper);z-index:1000;display:flex;align-items:center;justify-content:center;}
+  .gate-box{text-align:center;padding:20px;}
+  .gate-title{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:700;margin-bottom:20px;}
+  .gate-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:420px;}
+  .gate-btn{font-family:'Noto Sans JP',sans-serif;font-size:14px;padding:14px 22px;border:1px solid var(--ink);background:#fff;cursor:pointer;border-radius:2px;min-width:110px;}
+  .gate-btn:hover{background:var(--card);}
+
+  .user-bar{background:var(--ink);color:var(--paper);padding:10px 20px;font-size:12.5px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:100;}
+  .user-bar .who{font-weight:700;}
+  .user-bar select{font-family:'Noto Sans JP',sans-serif;font-size:12.5px;padding:4px 8px;border-radius:2px;border:1px solid var(--line);}
+  .user-bar button{font-family:'Noto Sans JP',sans-serif;font-size:12px;padding:5px 12px;border:1px solid var(--paper);background:transparent;color:var(--paper);cursor:pointer;border-radius:2px;}
+  .user-bar button:hover{background:rgba(255,255,255,0.12);}
+  .user-bar .status{color:#B9C0BA;margin-left:auto;}
+  .user-bar .final-btn{background:var(--warn);border-color:var(--warn);color:#fff;}
+
+  .view-banner{background:var(--nego-bg);color:var(--nego-text);padding:10px 20px;font-size:12.5px;text-align:center;}
+  body.viewing input,body.viewing .badge-toggle{pointer-events:none;opacity:.7;}
+  body.viewing .add-btn{pointer-events:none;opacity:.4;}
+
+  #historyPanel{background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;}
+  .history-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:12.5px;}
+  .history-row:last-child{border-bottom:none;}
+  .history-row .hdate{font-weight:700;width:140px;}
+  .history-row button{font-size:11.5px;padding:4px 10px;border:1px solid var(--line);background:#fff;cursor:pointer;border-radius:2px;}
+  .history-row button:hover{background:var(--card);}
+
+  @media print{
+    .user-bar,#historyPanel,#viewBanner,#switchUserBtn,#historyToggleBtn,.add-btn,.del-btn,.badge-toggle,.tab-nav{display:none !important;}
+    .tab-panel{display:block !important;}
+    input.amt{border:none !important;color:var(--ink) !important;}
+    body{padding-bottom:0;}
+  }
+  .result-card.start{background:#FBEADD;border-color:#E8C29B;}
+  .result-card.start .label{font-size:14px;color:#8A5A22;}
+  .result-card.start .value{color:#8A5A22;}
+  .result-card.payoff{background:#E3EEE1;border-color:#AFCBA9;}
+  .result-card.payoff .label{font-size:14px;color:#2E5E38;}
+  .result-card.payoff .value{color:#2E5E38;}
+
+  .add-btn{margin-top:8px;font-size:12px;padding:5px 12px;border:1px dashed var(--line);background:transparent;cursor:pointer;color:var(--ink-soft);}
+  .ac-btn{font-family:'Noto Sans JP',sans-serif;font-size:12px;padding:6px 12px;border:1px solid var(--line);background:#fff;cursor:pointer;border-radius:2px;color:var(--ink-soft);}
+  .ac-btn.active{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700;}
+  .add-btn:hover{color:var(--ink);border-color:var(--ink-soft);}
+  .del-btn{border:none;background:transparent;color:var(--warn);cursor:pointer;font-size:15px;padding:2px 8px;}
+  input.text-in{border:1px solid var(--line);padding:4px 6px;font-size:13px;background:#fff;}
+
+  .lender-card{background:#fff;border:1px solid var(--line);padding:16px 18px;margin-bottom:14px;}
+  .lender-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+  .lender-name{font-weight:700;font-size:15px;}
+  .lender-loan{font-size:12px;color:var(--ink-soft);}
+  .lender-loan input.amt{width:100px;}
+
+  .input-row{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap;}
+  .input-row label{font-size:12px;color:var(--ink-soft);width:96px;flex-shrink:0;}
+  input.small{width:56px;text-align:right;font-family:'JetBrains Mono',monospace;border:1px solid var(--line);padding:4px 6px;font-size:13px;background:#fff;}
+
+  .lender-status{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink-soft);display:flex;justify-content:space-between;}
+  .lender-status b{font-family:'JetBrains Mono',monospace;color:var(--ink);}
+
+  .reflect-box{background:#fff;border:1px solid var(--line);padding:14px 16px;margin-bottom:16px;}
+  .reflect-label{font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;}
+  .reflect-current{font-size:12.5px;color:var(--ink-soft);margin-top:8px;}
+  .reflect-current b{color:var(--ink);}
+</style>
+</head>
+<body>
+
+<div id="userGate">
+  <div class="gate-box">
+    <div class="gate-title">利用者を選んでください</div>
+    <div class="gate-btns">
+      <button type="button" class="gate-btn" data-user="licoyas">licoyas</button>
+      <button type="button" class="gate-btn" data-user="memini">memini</button>
+      <button type="button" class="gate-btn" data-user="GARAGE">GARAGE</button>
+      <button type="button" class="gate-btn" data-user="kikiki">kikiki</button>
+    </div>
+  </div>
+</div>
+
+<div class="user-bar">
+  <span class="who">利用者：<span id="currentUserLabel">—</span></span>
+  <button type="button" id="switchUserBtn">ユーザーを切り替える</button>
+  <span>他の人の内容を見る：</span>
+  <select id="viewSelect">
+    <option value="">（自分の内容）</option>
+    <option value="licoyas">licoyas</option>
+    <option value="memini">memini</option>
+    <option value="GARAGE">GARAGE</option>
+    <option value="kikiki">kikiki</option>
+  </select>
+  <button type="button" id="finalSaveBtn" class="final-btn" style="display:none;">確定版として保存</button>
+  <button type="button" id="historyToggleBtn">確定版履歴</button>
+  <span class="status" id="saveStatus"></span>
+</div>
+<div id="viewBanner"></div>
+<div id="historyPanel" style="display:none;"></div>
+
+<div class="tab-nav">
+  <button type="button" class="tab-btn active" data-tab="tabA1">A1：ndr・BAUM</button>
+  <button type="button" class="tab-btn" data-tab="tabA2">A2：島崎工務店</button>
+  <button type="button" class="tab-btn" data-tab="tabB">B：集金・返済</button>
+</div>
+
+<header class="top">
+  <div class="wrap">
+    <h1>資金計画ツール</h1>
+    <div class="sub">アトリエ カラカナ｜A1（ndr・BAUM）・A2（島崎工務店）それぞれの支出・資金と、B（集金・返済）をまとめて管理</div>
+  </div>
+</header>
+
+<!-- ============ タブA1：ndr・BAUM ============ -->
+<div class="wrap tab-panel active" id="tabA1">
+
+<section>
+  <div class="sec-head"><div class="sec-no">1</div><div class="sec-title">支出一覧</div></div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>施工費用プール１（外注費用　ndr・BAUM）</span><span class="amt" id="a1Pool1Total">—</span></div>
+    <div id="a1Groups1"></div>
+    <div class="cat-subtotals" id="a1CatSubtotals1"></div>
+    <div style="margin-top:8px;font-size:12.5px;color:var(--ink-soft);">当初比：<span id="a1PoolDiff1"></span></div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>施工費用プール２（エアコン　島崎工務店／ミツバ）</span><span class="amt" id="a1Pool2Total">—</span></div>
+    <div id="a1Groups2"></div>
+    <div class="cat-subtotals" id="a1CatSubtotals2"></div>
+    <div style="margin-top:8px;font-size:12.5px;color:var(--ink-soft);">当初比：<span id="a1PoolDiff2"></span></div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>施工費用プール共通（カラカナ手配備品のみ）</span><span class="amt" id="a1Pool3Total">—</span></div>
+    <div id="a1Groups3"></div>
+    <div class="cat-subtotals" id="a1CatSubtotals3"></div>
+    <div style="margin-top:8px;font-size:12.5px;color:var(--ink-soft);">当初比：<span id="a1PoolDiff3"></span></div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>施工費用プール　合計</span><span class="amt" id="a1ConstructionTotal">—</span></div>
+    <div class="cat-subtotals" id="a1CatSubtotalsAll"></div>
+    <div style="margin-top:8px;font-size:12.5px;color:var(--ink-soft);">プール全体の当初比：<span id="a1PoolDiffAll"></span></div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>立替費用プール（A1・A2共通）</span><span class="amt" id="a1AdvanceTotal">—</span></div>
+    <div id="a1AdvanceGroups"></div>
+    <div class="cat-subtotals" id="a1AdvanceCatSubtotals"></div>
+    <div style="margin-top:8px;font-size:12.5px;color:var(--ink-soft);">プール全体の当初比：<span id="a1AdvancePoolDiff"></span></div>
+    <div class="highlight-box">
+      <div class="highlight-label">一人あたり立替金額（作家6名で均等割）</div>
+      <div class="highlight-value" id="a1AdvancePerPerson"></div>
+      <div class="highlight-breakdown">
+        <span>うち小田切に返す分：<b id="a1AdvancePerPersonOdagiri"></b></span>
+        <span>うちカラカナ口座に返す分：<b id="a1AdvancePerPersonKarakana"></b></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="sec-no">2</div><div class="sec-title">資金一覧</div></div>
+  <div class="pool-card">
+    <div class="fund-row"><span class="label">カラカナ口座（総額）</span><input type="text" class="fund-amt" id="a1KarakanaTotal" value="1,000,000"></div>
+    <div class="alloc-box">
+      <div class="alloc-row"><label>→ 施工費用プールへの配分</label><input type="text" class="fund-amt" id="a1KarakanaToConstruction" value="600,000"></div>
+      <div class="alloc-row"><label>→ 立替費用プールへの配分</label><input type="text" class="fund-amt" id="a1KarakanaToAdvance" value="400,000"></div>
+    </div>
+    <div id="a1AllocBanner"></div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>施工費用プール資金</span><span class="amt" id="a1ConstructionFundTotal">—</span></div>
+    <div class="fund-row"><span class="label">カラカナ口座（配分分）</span><span id="a1FundKarakanaC" style="font-family:'JetBrains Mono',monospace;"></span></div>
+    <table class="ledger" id="a1LendersTable" style="margin-top:8px;">
+      <thead><tr><th>貸付者</th><th style="text-align:right;">貸付額</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button type="button" class="add-btn" id="a1AddLenderBtn">＋ 貸付者を追加</button>
+    <div style="font-size:11px;color:var(--ink-soft);margin-top:8px;">この貸付者リストは「B：集金・返済」タブで「A1を反映」を押すと返済プランに反映されます。</div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>立替費用プール資金（共通）</span><span class="amt" id="a1AdvanceFundTotal">—</span></div>
+    <div class="fund-row"><span class="label">カラカナ口座（配分分）</span><span id="a1FundKarakanaA" style="font-family:'JetBrains Mono',monospace;"></span></div>
+    <div class="fund-row"><span class="label">小田切 立替</span><input type="text" class="fund-amt" id="a1OdagiriAdvance" value="2,400,000"></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="sec-no">3</div><div class="sec-title">過不足額（＝資金－支出）</div></div>
+  <div class="result-grid">
+    <div class="result-card"><div class="label">施工費用プール</div><div class="value" id="a1ResultConstruction">—</div></div>
+    <div class="result-card"><div class="label">立替費用プール</div><div class="value" id="a1ResultAdvance">—</div></div>
+    <div class="result-card"><div class="label">全体合計</div><div class="value" id="a1ResultTotal">—</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="sec-no">4</div><div class="sec-title">当初見積もりとの差額</div></div>
+  <div class="result-grid">
+    <div class="result-card"><div class="label">施工費用プール</div><div class="value" id="a1DiffConstruction">—</div></div>
+    <div class="result-card"><div class="label">立替費用プール</div><div class="value" id="a1DiffAdvance">—</div></div>
+    <div class="result-card"><div class="label">全体合計</div><div class="value" id="a1DiffTotal">—</div></div>
+  </div>
+</section>
+
+</div>
+
+<!-- ============ タブA2：島崎工務店 ============ -->
+<div class="wrap tab-panel" id="tabA2">
+
+<section>
+  <div class="sec-head"><div class="sec-no">1</div><div class="sec-title">支出一覧</div></div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>施工費用プール１（島崎工務店）</span><span class="amt" id="a2Pool1Total">—</span></div>
+    <div id="a2Groups1"></div>
+    <div class="cat-subtotals" id="a2CatSubtotals1"></div>
+    <div style="margin-top:8px;font-size:12.5px;color:var(--ink-soft);">当初比：<span id="a2PoolDiff1"></span></div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>施工費用プール共通（カラカナ手配備品のみ）</span><span class="amt" id="a2Pool2Total">—</span></div>
+    <div id="a2Groups2"></div>
+    <div class="cat-subtotals" id="a2CatSubtotals2"></div>
+    <div style="margin-top:8px;font-size:12.5px;color:var(--ink-soft);">当初比：<span id="a2PoolDiff2"></span></div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>施工費用プール　合計</span><span class="amt" id="a2ConstructionTotal">—</span></div>
+    <div class="cat-subtotals" id="a2CatSubtotalsAll"></div>
+    <div style="margin-top:8px;font-size:12.5px;color:var(--ink-soft);">プール全体の当初比：<span id="a2PoolDiffAll"></span></div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>立替費用プール（A1・A2共通）</span><span class="amt" id="a2AdvanceTotal">—</span></div>
+    <div id="a2AdvanceGroups"></div>
+    <div class="cat-subtotals" id="a2AdvanceCatSubtotals"></div>
+    <div style="margin-top:8px;font-size:12.5px;color:var(--ink-soft);">プール全体の当初比：<span id="a2AdvancePoolDiff"></span></div>
+    <div class="highlight-box">
+      <div class="highlight-label">一人あたり立替金額（作家6名で均等割）</div>
+      <div class="highlight-value" id="a2AdvancePerPerson"></div>
+      <div class="highlight-breakdown">
+        <span>うち小田切に返す分：<b id="a2AdvancePerPersonOdagiri"></b></span>
+        <span>うちカラカナ口座に返す分：<b id="a2AdvancePerPersonKarakana"></b></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="sec-no">2</div><div class="sec-title">資金一覧</div></div>
+  <div class="pool-card">
+    <div class="fund-row"><span class="label">カラカナ口座（総額）</span><input type="text" class="fund-amt" id="a2KarakanaTotal" value="1,000,000"></div>
+    <div class="alloc-box">
+      <div class="alloc-row"><label>→ 施工費用プールへの配分</label><input type="text" class="fund-amt" id="a2KarakanaToConstruction" value="600,000"></div>
+      <div class="alloc-row"><label>→ 立替費用プールへの配分</label><input type="text" class="fund-amt" id="a2KarakanaToAdvance" value="400,000"></div>
+    </div>
+    <div id="a2AllocBanner"></div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>施工費用プール資金</span><span class="amt" id="a2ConstructionFundTotal">—</span></div>
+    <div class="fund-row"><span class="label">カラカナ口座（配分分）</span><span id="a2FundKarakanaC" style="font-family:'JetBrains Mono',monospace;"></span></div>
+    <table class="ledger" id="a2LendersTable" style="margin-top:8px;">
+      <thead><tr><th>貸付者</th><th style="text-align:right;">貸付額</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button type="button" class="add-btn" id="a2AddLenderBtn">＋ 貸付者を追加</button>
+    <div style="font-size:11px;color:var(--ink-soft);margin-top:8px;">この貸付者リストは「B：集金・返済」タブで「A2を反映」を押すと返済プランに反映されます。</div>
+  </div>
+
+  <div class="pool-card">
+    <div class="pool-title"><span>立替費用プール資金（共通）</span><span class="amt" id="a2AdvanceFundTotal">—</span></div>
+    <div class="fund-row"><span class="label">カラカナ口座（配分分）</span><span id="a2FundKarakanaA" style="font-family:'JetBrains Mono',monospace;"></span></div>
+    <div class="fund-row"><span class="label">小田切 立替</span><input type="text" class="fund-amt" id="a2OdagiriAdvance" value="2,400,000"></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="sec-no">3</div><div class="sec-title">過不足額（＝資金－支出）</div></div>
+  <div class="result-grid">
+    <div class="result-card"><div class="label">施工費用プール</div><div class="value" id="a2ResultConstruction">—</div></div>
+    <div class="result-card"><div class="label">立替費用プール</div><div class="value" id="a2ResultAdvance">—</div></div>
+    <div class="result-card"><div class="label">全体合計</div><div class="value" id="a2ResultTotal">—</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="sec-no">4</div><div class="sec-title">当初見積もりとの差額</div></div>
+  <div class="result-grid">
+    <div class="result-card"><div class="label">施工費用プール</div><div class="value" id="a2DiffConstruction">—</div></div>
+    <div class="result-card"><div class="label">立替費用プール</div><div class="value" id="a2DiffAdvance">—</div></div>
+    <div class="result-card"><div class="label">全体合計</div><div class="value" id="a2DiffTotal">—</div></div>
+  </div>
+</section>
+
+</div>
+
+<!-- ============ タブB：集金・返済 ============ -->
+<div class="wrap tab-panel" id="tabB">
+
+<section>
+  <div class="sec-head"><div class="sec-no">1</div><div class="sec-title">集金</div></div>
+
+  <div class="card">
+    <div class="card-title">家賃配分（作家6名）</div>
+    <table class="ledger" id="membersTable">
+      <tbody></tbody>
+      <tfoot><tr class="total"><td>配分合計</td><td style="text-align:right" id="membersTotal">—</td></tr></tfoot>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">その他収入</div>
+    <table class="ledger" id="otherIncomeTable">
+      <tbody></tbody>
+    </table>
+    <table class="ledger" id="galleryTable" style="margin-top:6px;">
+      <tbody></tbody>
+    </table>
+    <div style="font-size:11.5px;color:var(--ink-soft);margin-top:6px;">ギャラリー使用料は年間額のため、月次収支には12で割った月換算額を反映します。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">固定費</div>
+    <table class="ledger" id="fixedTable">
+      <tbody></tbody>
+      <tfoot><tr class="total"><td>固定費合計</td><td style="text-align:right" id="fixedTotal">—</td></tr></tfoot>
+    </table>
+  </div>
+
+  <div class="result-grid">
+    <div class="result-card"><div class="label">配分合計</div><div class="value" id="rcMembers">—</div></div>
+    <div class="result-card"><div class="label">その他収入（月換算）</div><div class="value" id="rcOther">—</div></div>
+    <div class="result-card"><div class="label">固定費合計</div><div class="value" id="rcFixed">—</div></div>
+  </div>
+  <div class="result-grid" style="margin-top:14px;">
+    <div class="result-card" style="grid-column:1 / -1;"><div class="label">月次収支（配分合計－固定費）</div><div class="value" id="rcNet">—</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="sec-no">2</div><div class="sec-title">返済</div></div>
+
+  <div class="reflect-box">
+    <div class="reflect-label">どちらの施工プランの貸付者リストで返済シミュレーションするか選んでください。</div>
+    <div style="display:flex;gap:8px;">
+      <button type="button" class="ac-btn" id="reflectA1Btn">A1（ndr・BAUM）を反映</button>
+      <button type="button" class="ac-btn" id="reflectA2Btn">A2（島崎工務店）を反映</button>
+    </div>
+    <div class="reflect-current">現在反映中：<b id="activeSourceLabel">—</b>　施工費用プール合計：<b id="activeSourceTotal">—</b></div>
+    <div class="reflect-current" id="activeSourceBreakdown"></div>
+  </div>
+
+  <div class="card" style="background:#fff;">
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px;">カラカナ口座残高が下限額を超えた翌月から返済を開始し、下限額を下回らない範囲で貸付者に分配します。貸付者と貸付額は「A1」または「A2」タブの資金一覧で編集し、上のボタンで反映してください。</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <label style="font-size:12.5px;color:var(--ink-soft);white-space:nowrap;">2026年9月時点の口座残高</label>
+      <input type="text" class="amt" id="startBalance" value="0" style="width:120px;">
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+      <label style="font-size:12.5px;color:var(--ink-soft);white-space:nowrap;">下回ってはいけない残高（下限）</label>
+      <input type="text" class="amt" id="floorAmt" value="1,200,000" style="width:120px;">
+    </div>
+  </div>
+
+  <div id="lenderCards"></div>
+
+  <div class="result-grid">
+    <div class="result-card start"><div class="label">返済開始（移転後の月数）</div><div class="value" id="rcStart">—</div></div>
+    <div class="result-card payoff"><div class="label">全員完済までの期間</div><div class="value" id="rcPayoff">—</div></div>
+  </div>
+  <div id="overflowBanner"></div>
+</section>
+
+</div>
+
+<script>
+const yen = n => (n<0?'-':'') + '¥' + Math.abs(Math.round(n)).toLocaleString('ja-JP');
+const parseAmt = s => Number(String(s).replace(/[^0-9.-]/g,'')) || 0;
+const round10k = n => Math.round(n/10000)*10000;
+let idc = 0;
+const nid = () => 'it' + (idc++);
+
+function item(no, name, cat, amount, source){ return {id:nid(), no, name, cat, amount, source, original:amount}; }
+
+// ---- A1：ndr・BAUM ----
+const ndrBaumData = [
+  { group:'ndr（設計・建具）', subgroups:[
+    { name:'設計業務', items:[
+      item(null,'プラン作成','固定',10000),
+      item(null,'行政及び関係諸庁協議','固定',10000),
+      item(null,'基本設計（23.39坪）','固定',70170),
+      item(null,'実施設計','固定',0),
+      item(null,'業者協議（現場打合せ・材料検討）','固定',10000),
+      item(null,'全体コーディネート費用','固定',0),
+      item(null,'構造・N値計算　省エネ関連図面作成費','固定',0),
+      item(null,'消防書類申請書作成','固定',20000),
+      item(null,'完了検査申請書作成','固定',0),
+    ]},
+    { name:'設計監理業務', items:[
+      item(null,'設計監理（23.39坪）','固定',46780),
+      item(null,'諸経費（交通費）','交渉余地',50000),
+      item(null,'端数値引き','固定',-450),
+    ]},
+    { name:'建具枠', items:[
+      item(null,'枠製作','交渉余地',50000),
+      item(null,'金物一式','交渉余地',7500),
+      item(null,'上記梱包　送料','交渉余地',5000),
+      item(null,'シリンダー錠','交渉余地',10000),
+      item(null,'搬入取付費（古建具取付鍵設置）','交渉余地',45000),
+      item(null,'諸経費（交通費）','交渉余地',35000),
+    ]},
+    { name:null, items:[ item(null,'消費税(10%)','固定',36900) ] },
+  ]},
+  { group:'BAUM（改修工事本体）', subgroups:[
+    { name:'A.仮設工事', items:[
+      item(null,'養生費（ギャラリー）','固定',20000), item(null,'発生処分費','交渉余地',130000),
+      item(null,'仮設費','固定',12000), item(null,'美装','削減候補',65000), item(null,'現場消耗品','固定',8000),
+    ]},
+    { name:'B.解体工事', items:[
+      item(null,'鉄製棚撤去','固定',20000), item(null,'木製壁撤去処分','固定',82800),
+      item(null,'給水タンク撤去処分','固定',36000), item(null,'解体材処分費','固定',50000),
+      item(null,'交通費・諸経費','交渉余地',25000),
+    ]},
+    { name:'C.木工事', items:[
+      item(null,'土台','固定',3800), item(null,'柱','固定',16800), item(null,'間柱','固定',21600),
+      item(null,'間柱','固定',44000), item(null,'野縁','固定',26400), item(null,'胴縁','固定',5760),
+      item(null,'針葉樹合板','固定',42000), item(null,'プラスターボード','固定',27000),
+      item(null,'造作材','削減候補',30000), item(null,'断熱材','固定',47400),
+      item(null,'材料運搬費','固定',50000), item(null,'金物費','固定',45000),
+      item(null,'工事労務費','固定',450000), item(null,'諸経費・交通費','交渉余地',35000),
+    ]},
+    { name:'D.電気工事', items:[
+      item(null,'分電盤','固定',40080), item(null,'上記移設・取替え','固定',58800),
+      item(null,'既存コンセント取替え','固定',2400), item(null,'一般コンセント配線・取付け','固定',89760),
+      item(null,'キッチン専用コンセント配線・取付け','固定',23280), item(null,'エアコン専用コンセント配線・取付け','固定',19680),
+      item(null,'ライティングレール','削減候補',56400), item(null,'上記配線・取付け','削減候補',40320),
+      item(null,'光ケーブル引き込み用配管','削減候補',13440), item(null,'動力エアコン電源配線・接続','固定',40440),
+      item(null,'動力東京電力申請','固定',15600), item(null,'交通費、諸経費','交渉余地',35400),
+    ]},
+    { name:'E.左官工事', items:[
+      item(null,'土間穴埋め処理','削減候補',50000), item(null,'サンダーカップ','削減候補',35000),
+      item(null,'土間薄塗','削減候補',104000), item(null,'壁ラスカット','削減候補',95000),
+    ]},
+    { name:'F.ブロック工事', items:[
+      item(null,'ブロック積＠150','固定',48960), item(null,'アンカー','固定',36000), item(null,'諸経費','固定',14400),
+    ]},
+    { name:'G.板金工事', items:[ item(null,'サッシ水切り','固定',35000) ]},
+    { name:'H.現場管理費', items:[ item(null,'現場管理費','固定',200000) ]},
+    { name:'I.一般諸経費', items:[ item(null,'一般諸経費','交渉余地',250000) ]},
+    { name:null, items:[ item(null,'消費税(10%)','固定',259752) ] },
+  ]},
+];
+
+const businessACItem = item(null,'業務用エアコン購入・設置','交渉余地',360000,'島崎工務店');
+const residentialACItem = item(null,'家庭用エアコン購入・設置','削減候補',68000,'島崎工務店');
+const acData = [
+  { group:'エアコン', subgroups:[ { name:null, items:[ businessACItem, residentialACItem ] } ] },
+];
+
+let acVendor = 'shimazaki'; // 'shimazaki' | 'mitsuba'
+let acPlan = '6'; // '5' | '6'
+
+function updateACItems(){
+  if(acVendor === 'shimazaki'){
+    businessACItem.amount = 360000;
+    businessACItem.source = '島崎工務店';
+    residentialACItem.name = '家庭用エアコン購入・設置';
+    residentialACItem.amount = 68000;
+    residentialACItem.source = '島崎工務店';
+  } else {
+    businessACItem.amount = (acPlan === '6') ? 902000 : 847000;
+    businessACItem.source = acPlan === '6' ? 'ミツバ（6馬力）' : 'ミツバ（5馬力）';
+    residentialACItem.name = '家庭用エアコン購入・設置（別途手配）';
+    residentialACItem.amount = 100000;
+    residentialACItem.source = null;
+  }
+}
+updateACItems();
+
+// ---- A2：島崎工務店（見積第7996号） ----
+const shimazakiData = [
+  { group:'解体', subgroups:[
+    { name:null, items:[
+      item(1, '駐車場解体工事','削減候補',140000),
+      item(2, '解体廃材混載積込','削減候補',35000),
+      item(3, '上記発生廃材処分費','削減候補',79000),
+    ]},
+  ]},
+  { group:'施工費', subgroups:[
+    { name:null, items:[ item(4, '間仕切り基礎・造作工事','削減候補',68000) ]},
+    { name:'ギャラリー部分（想定）', items:[
+      item(5, '杉土台','削減候補',8750), item(6, '杉間仕切り柱','削減候補',20550),
+      item(7, '杉間柱','削減候補',18800), item(8, '針葉樹構造用合板','削減候補',35000),
+    ]},
+    { name:'外壁部分（想定）', items:[
+      item(9, '壁内断熱材','削減候補',28000), item(10,'外部サイディング','削減候補',264000),
+      item(11,'上記シーリング工事','削減候補',37500), item(12,'方立て見切り材','削減候補',25000),
+      item(13,'アルミ建具','削減候補',79000),
+    ]},
+    { name:null, items:[
+      item(14,'消耗品・雑材料費','固定',18500),
+      item(15,'上記現場加工・施工費','固定',220000),
+    ]},
+  ]},
+  { group:'エアコン工事', subgroups:[
+    { name:null, items:[
+      item(16,'エアコン（業務用6馬力）','固定',360000),
+      item(17,'エアコン（28型壁掛け）','固定',68000),
+      item(18,'冷媒管','固定',53600),
+      item(19,'電気工事　新規配線材料費','固定',28800),
+      item(20,'消耗品・雑材料費（エアコン付随）','固定',45000),
+      item(21,'2か所取り付け施工費','固定',120000),
+    ]},
+  ]},
+  { group:'人件費他', subgroups:[
+    { name:null, items:[
+      item(22,'監理技術者常駐諸経費','固定',250000),
+      item(23,'御値引','固定',-52500),
+      item(24,'消費税(10%)','固定',195000),
+    ]},
+  ]},
+];
+
+// ---- 共通：カラカナ手配備品（A1・A2どちらでも同じデータ）----
+const amenitiesData = [
+  { group:'カラカナ手配備品', subgroups:[
+    { name:null, items:[
+      item(null,'ガス給湯器','削減候補',200000,'カラカナ自己手配'),
+      item(null,'シンク（キッチン）','削減候補',100000,'カラカナ自己手配'),
+      item(null,'シンク（足洗い場）','削減候補',100000,'カラカナ自己手配'),
+      item(null,'その他備品（掃除機など）','削減候補',30000,'カラカナ自己手配'),
+    ]},
+  ]},
+];
+
+// ---- 共通：立替費用（A1・A2どちらでも同じデータ）----
+const advanceData = [
+  { group:'立替費用', subgroups:[
+    { name:null, items:[
+      item(null,'契約費','固定',2397870,'小田切立替'),
+      item(null,'赤帽','削減候補',200000,'カラカナ口座立替'),
+      item(null,'不用品回収','削減候補',100000,'カラカナ口座立替'),
+      item(null,'消耗品（梱包材等）','削減候補',50000,'カラカナ口座立替'),
+    ]},
+  ]},
+];
+
+const CAT_CYCLE = {'固定':'削減候補', '削減候補':'交渉余地', '交渉余地':'固定'};
+const CAT_MAP = {'固定':['fixed','固定'], '削減候補':['cut','削減候補'], '交渉余地':['nego','交渉余地']};
+
+function badgeHtml(cat, id){
+  const [cls,label] = CAT_MAP[cat];
+  return `<span class="badge ${cls} badge-toggle" data-id="${id}" title="クリックで区分を切り替え">${label}</span>`;
+}
+
+function renderPool(data, containerId){
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  data.forEach(g=>{
+    const gh = document.createElement('div');
+    gh.className = 'group-head';
+    const gd = groupDiff(g);
+    gh.innerHTML = `<span>${g.group}</span><span style="float:right;font-weight:400;font-size:11.5px;">当初比：${diffHtml(gd.diff)}</span>`;
+    container.appendChild(gh);
+
+    if(g.group === 'エアコン'){
+      const selBox = document.createElement('div');
+      selBox.style.cssText = 'display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;margin:6px 0 12px;';
+      selBox.innerHTML = `
+        <div>
+          <div style="font-size:11px;color:var(--ink-soft);margin-bottom:4px;">業務用エアコンの発注先</div>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="ac-btn ac-vendor-btn ${acVendor==='shimazaki'?'active':''}" data-vendor="shimazaki">島崎工務店</button>
+            <button type="button" class="ac-btn ac-vendor-btn ${acVendor==='mitsuba'?'active':''}" data-vendor="mitsuba">ミツバ</button>
+          </div>
+        </div>
+        ${acVendor==='mitsuba' ? `
+        <div>
+          <div style="font-size:11px;color:var(--ink-soft);margin-bottom:4px;">ミツバのプラン</div>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="ac-btn ac-plan-btn ${acPlan==='5'?'active':''}" data-plan="5">5馬力（¥847,000）</button>
+            <button type="button" class="ac-btn ac-plan-btn ${acPlan==='6'?'active':''}" data-plan="6">6馬力（¥902,000）</button>
+          </div>
+        </div>` : ''}
+      `;
+      container.appendChild(selBox);
+    }
+
+    g.subgroups.forEach(sg=>{
+      if(sg.name){
+        const sh = document.createElement('div');
+        sh.className = 'subgroup-head';
+        sh.textContent = sg.name;
+        container.appendChild(sh);
+      }
+      const table = document.createElement('table');
+      table.className = 'ledger';
+      const tbody = document.createElement('tbody');
+      sg.items.forEach(it=>{
+        const tr = document.createElement('tr');
+        tr.id = 'row-' + it.id;
+        if(it.cat==='削減候補' && it.off) tr.classList.add('off');
+        let chkHtml = '';
+        if(it.cat==='削減候補'){
+          chkHtml = `<input type="checkbox" ${it.off?'':'checked'} data-id="${it.id}" class="chk">`;
+        }
+        const editable = (it.cat==='削減候補' || it.cat==='交渉余地');
+        const eff = effectiveAmount(it);
+        const diffTag = eff !== it.original ? `<span style="font-size:10.5px;margin-left:6px;">(当初${yen(it.original)} ${diffHtml(eff-it.original)})</span>` : '';
+        tr.innerHTML = `
+          <td class="no-col">${it.no ?? ''}</td>
+          <td class="badge-col">${badgeHtml(it.cat, it.id)}</td>
+          <td class="chk-col">${chkHtml}</td>
+          <td class="name-col">${it.name}${it.source ? `<span class="src-tag">${it.source}</span>` : ''}</td>
+          <td class="amt-col"><input type="text" class="amt" data-id="${it.id}" value="${it.amount.toLocaleString('ja-JP')}" ${editable?'':'disabled'}>${diffTag}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if(/^[A-Z]\./.test(sg.name||'')){
+        const subtotal = sg.items.reduce((s,it)=> s + (it.cat==='削減候補' && it.off ? 0 : it.amount), 0);
+        const trTotal = document.createElement('tr');
+        trTotal.className = 'total';
+        trTotal.innerHTML = `<td colspan="4">${sg.name} 小計</td><td style="text-align:right">${yen(subtotal)}</td>`;
+        tbody.appendChild(trTotal);
+      }
+      table.appendChild(tbody);
+      container.appendChild(table);
+    });
+  });
+}
+
+function allItems(data){
+  const out = [];
+  data.forEach(g=> g.subgroups.forEach(sg=> sg.items.forEach(it=> out.push(it))));
+  return out;
+}
+function effectiveAmount(it){ return (it.cat==='削減候補' && it.off) ? 0 : it.amount; }
+function groupItems(g){ const out=[]; g.subgroups.forEach(sg=>sg.items.forEach(it=>out.push(it))); return out; }
+function groupDiff(g){
+  const items = groupItems(g);
+  const original = items.reduce((s,it)=> s+it.original, 0);
+  const current = items.reduce((s,it)=> s+effectiveAmount(it), 0);
+  return {original, current, diff: current-original};
+}
+function poolDiff(data){
+  const items = allItems(data);
+  const original = items.reduce((s,it)=> s+it.original, 0);
+  const current = items.reduce((s,it)=> s+effectiveAmount(it), 0);
+  return {original, current, diff: current-original};
+}
+function diffHtml(diff){
+  if(diff===0) return `<span style="color:var(--ink-soft);">±¥0</span>`;
+  const cls = diff<0 ? 'style="color:#2E5E38;"' : 'style="color:#8A5A22;"';
+  const sign = diff<0 ? '' : '+';
+  return `<span ${cls}>${sign}${yen(diff)}</span>`;
+}
+function poolTotal(data){
+  return allItems(data).reduce((s,it)=> s + (it.cat==='削減候補' && it.off ? 0 : it.amount), 0);
+}
+function catSubtotalsOf(dataArrays){
+  const totals = {'固定':0,'削減候補':0,'交渉余地':0};
+  dataArrays.forEach(data=>{
+    allItems(data).forEach(it=>{
+      if(it.cat==='削減候補' && it.off) return;
+      totals[it.cat] += it.amount;
+    });
+  });
+  return totals;
+}
+function renderCatSubtotals(dataArrays, elId){
+  const t = catSubtotalsOf(dataArrays);
+  document.getElementById(elId).innerHTML = `
+    <span>固定：<b>${yen(t['固定'])}</b></span>
+    <span>削減候補：<b>${yen(t['削減候補'])}</b></span>
+    <span>交渉余地：<b>${yen(t['交渉余地'])}</b></span>
+  `;
+}
+function poolDiffOf(dataArrays){
+  let original=0, current=0;
+  dataArrays.forEach(data=>{
+    const items = allItems(data);
+    original += items.reduce((s,it)=>s+it.original,0);
+    current += items.reduce((s,it)=>s+effectiveAmount(it),0);
+  });
+  return {original, current, diff: current-original};
+}
+
+function attachItemListeners(data, onChange){
+  allItems(data).forEach(it=>{
+    const badge = document.querySelector(`.badge-toggle[data-id="${it.id}"]`);
+    if(badge){
+      badge.addEventListener('click', ()=>{
+        it.cat = CAT_CYCLE[it.cat];
+        if(it.cat==='削減候補') it.off = false;
+        renderAll();
+      });
+    }
+    const chk = document.querySelector(`.chk[data-id="${it.id}"]`);
+    if(chk){
+      chk.addEventListener('change', e=>{
+        it.off = !e.target.checked;
+        renderAll();
+      });
+    }
+    const amt = document.querySelector(`input.amt[data-id="${it.id}"]`);
+    if(amt && !amt.disabled){
+      amt.addEventListener('change', e=>{
+        it.amount = parseAmt(e.target.value);
+        renderAll();
+      });
+    }
+  });
+}
+
+// ---- 貸付者リスト（A1・A2別々）----
+let lenderCounter = 1;
+const newLenderId = () => 'ln' + (lenderCounter++);
+
+let lenders1 = [
+  {id:'kikiki', name:'kikiki', loan:1000000},
+  {id:'takai', name:'高井', loan:600000},
+];
+let lenders2 = [
+  {id:'kikiki2', name:'kikiki', loan:1000000},
+  {id:'takai2', name:'高井', loan:600000},
+];
+
+function renderLendersFundingTable(lendersArr, tbodySelector){
+  const tbody = document.querySelector(tbodySelector);
+  tbody.innerHTML = '';
+  lendersArr.forEach(l=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" class="text-in lender-name-in" data-id="${l.id}" value="${l.name}" style="width:120px;"></td>
+      <td style="text-align:right"><input type="text" class="amt lender-loan-in" data-id="${l.id}" value="${l.loan.toLocaleString('ja-JP')}"></td>
+      <td style="text-align:right"><button type="button" class="del-btn" data-id="${l.id}" aria-label="削除">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function attachLendersFundingListeners(lendersArrGetter, lendersArrSetter, tbodySelector){
+  document.querySelectorAll(`${tbodySelector} .lender-name-in`).forEach(el=>{
+    el.addEventListener('change', e=>{
+      const l = lendersArrGetter().find(x=>x.id===e.target.dataset.id);
+      if(l) l.name = e.target.value || l.name;
+      renderAll();
+    });
+  });
+  document.querySelectorAll(`${tbodySelector} .lender-loan-in`).forEach(el=>{
+    el.addEventListener('change', e=>{
+      const l = lendersArrGetter().find(x=>x.id===e.target.dataset.id);
+      if(l) l.loan = parseAmt(e.target.value);
+      renderAll();
+    });
+  });
+  document.querySelectorAll(`${tbodySelector} .del-btn`).forEach(el=>{
+    el.addEventListener('click', e=>{
+      lendersArrSetter(lendersArrGetter().filter(x=>x.id!==e.target.dataset.id));
+      renderAll();
+    });
+  });
+}
+
+document.getElementById('a1AddLenderBtn').addEventListener('click', ()=>{
+  lenders1.push({id:newLenderId(), name:'新しい貸付者', loan:0});
+  renderAll();
+});
+document.getElementById('a2AddLenderBtn').addEventListener('click', ()=>{
+  lenders2.push({id:newLenderId(), name:'新しい貸付者', loan:0});
+  renderAll();
+});
+
+// ---- B：集金・返済 ----
+let members = [
+  {name:'安居', amount:70000}, {name:'小田切', amount:70000}, {name:'高井', amount:70000},
+  {name:'kikiki', amount:100000}, {name:'吉武', amount:50000}, {name:'前川', amount:60000},
+];
+let fixedCosts = [
+  {name:'家賃', amount:270000}, {name:'電気', amount:60000}, {name:'ガス', amount:10000},
+  {name:'水道', amount:2000}, {name:'消耗品', amount:15000}, {name:'ネット', amount:8000},
+];
+let otherIncome = [
+  {name:'時間貸し使用料（野田）', amount:30000, startYear:2026, startMonth:10},
+  {name:'時間貸し使用料（加藤）', amount:30000, startYear:2026, startMonth:10},
+];
+let galleryIncome = {name:'ギャラリー使用料（年間）', amount:500000};
+const MAX_MONTHS = 480;
+
+// 返済シミュレーションで使う「反映済み」貸付者リスト
+let activeLenders = [];
+let activeSource = null; // 'A1' | 'A2' | null
+
+function reflectSource(source){
+  const src = (source === 'A1') ? lenders1 : lenders2;
+  const prevMonthly = {};
+  activeLenders.forEach(l=> prevMonthly[l.id] = l.monthly);
+  activeLenders = src.map(l=> ({id:l.id, name:l.name, loan:l.loan, monthly: prevMonthly[l.id] ?? 0}));
+  activeSource = source;
+  renderAll();
+}
+document.getElementById('reflectA1Btn').addEventListener('click', ()=> reflectSource('A1'));
+document.getElementById('reflectA2Btn').addEventListener('click', ()=> reflectSource('A2'));
+
+function renderMembers(){
+  const tbody = document.querySelector('#membersTable tbody');
+  tbody.innerHTML = '';
+  members.forEach((m,idx)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${m.name}</td><td style="text-align:right"><input type="text" class="amt member-amt" data-idx="${idx}" value="${m.amount.toLocaleString('ja-JP')}"></td>`;
+    tbody.appendChild(tr);
+  });
+  const total = members.reduce((s,m)=>s+m.amount,0);
+  document.getElementById('membersTotal').textContent = yen(total);
+  return total;
+}
+
+function renderOtherIncome(){
+  const tbody = document.querySelector('#otherIncomeTable tbody');
+  tbody.innerHTML = '';
+  otherIncome.forEach((o,idx)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${o.name}（月）</td>
+      <td style="text-align:right"><input type="text" class="amt other-amt" data-idx="${idx}" value="${o.amount.toLocaleString('ja-JP')}"></td>
+      <td style="text-align:right;white-space:nowrap;">
+        <input type="number" class="small other-startyear" data-idx="${idx}" value="${o.startYear}" style="width:64px;">年
+        <input type="number" class="small other-startmonth" data-idx="${idx}" value="${o.startMonth}" min="1" max="12" style="width:44px;">月から
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  const gtbody = document.querySelector('#galleryTable tbody');
+  gtbody.innerHTML = `<tr><td>${galleryIncome.name}</td><td style="text-align:right"><input type="text" class="amt gallery-amt" value="${galleryIncome.amount.toLocaleString('ja-JP')}"></td><td></td></tr>`;
+  const otherMonthlyTotal = otherIncome.reduce((s,o)=>s+o.amount,0);
+  const galleryMonthly = galleryIncome.amount / 12;
+  return otherMonthlyTotal + galleryMonthly;
+}
+
+function renderFixed(){
+  const tbody = document.querySelector('#fixedTable tbody');
+  tbody.innerHTML = '';
+  fixedCosts.forEach((f,idx)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${f.name}</td><td style="text-align:right"><input type="text" class="amt fixed-amt" data-idx="${idx}" value="${f.amount.toLocaleString('ja-JP')}"></td>`;
+    tbody.appendChild(tr);
+  });
+  const total = fixedCosts.reduce((s,f)=>s+f.amount,0);
+  document.getElementById('fixedTotal').textContent = yen(total);
+  return total;
+}
+
+function simulate(monthlyNet, lendersState, startBalance, floor){
+  let balance = startBalance;
+  const remaining = {};
+  lendersState.forEach(l=> remaining[l.id] = l.loan);
+  let eligibleMonth = null;
+  if(balance > floor){ eligibleMonth = 0; }
+  const payoffMonth = {};
+  let overflowOccurred = false;
+
+  for(let m=1; m<=MAX_MONTHS; m++){
+    balance += monthlyNet;
+    if(eligibleMonth===null && balance > floor){ eligibleMonth = m; }
+    if(eligibleMonth!==null && m > eligibleMonth){
+      const surplus = Math.max(0, balance - floor);
+      const desired = {};
+      lendersState.forEach(l=>{ desired[l.id] = Math.min(l.monthly, remaining[l.id]); });
+      const desiredTotal = Object.values(desired).reduce((a,b)=>a+b,0);
+      const pay = {};
+      if(desiredTotal > surplus && desiredTotal > 0){
+        overflowOccurred = true;
+        const ratio = surplus / desiredTotal;
+        lendersState.forEach(l=>{ pay[l.id] = round10k(desired[l.id] * ratio); });
+      } else {
+        lendersState.forEach(l=>{ pay[l.id] = desired[l.id]; });
+      }
+      lendersState.forEach(l=>{
+        const p = Math.min(pay[l.id], remaining[l.id]);
+        remaining[l.id] -= p;
+        balance -= p;
+        if(remaining[l.id] <= 0 && payoffMonth[l.id]===undefined){ payoffMonth[l.id] = m; }
+      });
+    }
+    if(lendersState.length>0 && lendersState.every(l=> remaining[l.id] <= 0)){ break; }
+  }
+  lendersState.forEach(l=>{ if(payoffMonth[l.id]===undefined) payoffMonth[l.id] = null; });
+  return {eligibleMonth, payoffMonth, overflowOccurred};
+}
+
+function monthsToYM(m){
+  if(m===null || m===undefined) return '—';
+  const y = Math.floor(m/12), rm = m%12;
+  if(y===0) return `${rm}ヶ月`;
+  if(rm===0) return `${y}年`;
+  return `${y}年${rm}ヶ月`;
+}
+const BASE_YEAR = 2026, BASE_MONTH = 9;
+function dateLabel(m){
+  if(m===null || m===undefined) return '';
+  const idx = (BASE_YEAR*12 + (BASE_MONTH-1)) + m;
+  const y = Math.floor(idx/12), mo = (idx%12)+1;
+  return `${y}年${mo}月`;
+}
+
+function renderRepaymentCards(monthlyNet, startBalance, floor){
+  const container = document.getElementById('lenderCards');
+  container.innerHTML = '';
+  const sim = simulate(monthlyNet, activeLenders, startBalance, floor);
+
+  activeLenders.forEach(l=>{
+    const card = document.createElement('div');
+    card.className = 'lender-card';
+    const py = sim.payoffMonth[l.id];
+    card.innerHTML = `
+      <div class="lender-head">
+        <div>
+          <div class="lender-name">${l.name}</div>
+          <div class="lender-loan">貸付額 <input type="text" class="amt loan-amt" data-id="${l.id}" value="${l.loan.toLocaleString('ja-JP')}"></div>
+        </div>
+      </div>
+      <div class="input-row">
+        <label>月額</label>
+        <input type="text" class="amt monthly-amt" data-id="${l.id}" value="${l.monthly.toLocaleString('ja-JP')}">
+      </div>
+      <div class="input-row">
+        <label>月数で</label>
+        <input type="number" class="small months-in" data-id="${l.id}" value="${l.loan>0 && l.monthly>0 ? Math.ceil(l.loan/l.monthly) : ''}">
+        <span style="font-size:12px;color:var(--ink-soft);">ヶ月</span>
+        <label style="width:auto;margin-left:10px;">年月で</label>
+        <input type="number" class="small years-in" data-id="${l.id}" value="${l.loan>0 && l.monthly>0 ? Math.floor(Math.ceil(l.loan/l.monthly)/12) : ''}">
+        <span style="font-size:12px;color:var(--ink-soft);">年</span>
+        <input type="number" class="small remmonths-in" data-id="${l.id}" value="${l.loan>0 && l.monthly>0 ? Math.ceil(l.loan/l.monthly)%12 : ''}">
+        <span style="font-size:12px;color:var(--ink-soft);">ヶ月</span>
+      </div>
+      <div class="lender-status">
+        <span>完済までの期間：<b>${py ? monthsToYM(py) : '未完済（480ヶ月超）'}</b></span>
+        <span>完済時期の目安：<b>${py ? dateLabel(py) : '—'}</b></span>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  document.getElementById('rcStart').textContent = (sim.eligibleMonth !== null) ? `${sim.eligibleMonth+1}ヶ月後（${dateLabel(sim.eligibleMonth+1)}）` : '未到達';
+  const payoffs = activeLenders.map(l=> sim.payoffMonth[l.id]===null ? -1 : sim.payoffMonth[l.id]);
+  const maxPayoff = payoffs.length ? Math.max(...payoffs) : -1;
+  document.getElementById('rcPayoff').textContent = maxPayoff>=0 ? `${monthsToYM(maxPayoff)}（${dateLabel(maxPayoff)}）` : '未完済';
+
+  const banner = document.getElementById('overflowBanner');
+  if(activeLenders.length === 0){
+    banner.innerHTML = `<div class="banner">まだプランが反映されていません。上のボタンからA1またはA2を反映してください。</div>`;
+  } else if(sim.overflowOccurred){
+    banner.innerHTML = `<div class="banner">希望額の合計が余剰金を超える月があったため、比率で自動的に按分しています（1万円単位）。</div>`;
+  } else {
+    banner.innerHTML = `<div class="banner good">希望額どおりに返済できる見込みです。</div>`;
+  }
+}
+
+function attachActiveLenderListeners(){
+  document.querySelectorAll('.loan-amt').forEach(el=>{
+    el.addEventListener('change', e=>{
+      const l = activeLenders.find(x=>x.id===e.target.dataset.id);
+      if(l) l.loan = parseAmt(e.target.value);
+      renderAll();
+    });
+  });
+  document.querySelectorAll('.monthly-amt').forEach(el=>{
+    el.addEventListener('change', e=>{
+      const l = activeLenders.find(x=>x.id===e.target.dataset.id);
+      if(l) l.monthly = parseAmt(e.target.value);
+      renderAll();
+    });
+  });
+  document.querySelectorAll('.months-in').forEach(el=>{
+    el.addEventListener('change', e=>{
+      const l = activeLenders.find(x=>x.id===e.target.dataset.id);
+      const m = Number(e.target.value) || 0;
+      if(l && m>0){ l.monthly = round10k(l.loan / m); }
+      renderAll();
+    });
+  });
+  document.querySelectorAll('.years-in, .remmonths-in').forEach(el=>{
+    el.addEventListener('change', e=>{
+      const l = activeLenders.find(x=>x.id===e.target.dataset.id);
+      if(!l) return;
+      const yearsEl = document.querySelector(`.years-in[data-id="${l.id}"]`);
+      const remEl = document.querySelector(`.remmonths-in[data-id="${l.id}"]`);
+      const totalMonths = (Number(yearsEl.value)||0)*12 + (Number(remEl.value)||0);
+      if(totalMonths>0){ l.monthly = round10k(l.loan / totalMonths); }
+      renderAll();
+    });
+  });
+}
+
+// ---- 施工プールの計算・描画（A1／A2共通ロジック）----
+function renderConstructionTab(prefix, poolDatasets, advData, karakanaInputIds, lendersArr){
+  // poolDatasets: [{data, containerId, totalId, catId, diffId}, ...]
+  poolDatasets.forEach(p=>{
+    renderPool(p.data, p.containerId);
+    document.getElementById(p.totalId).textContent = yen(poolTotal(p.data));
+    renderCatSubtotals([p.data], p.catId);
+    document.getElementById(p.diffId).innerHTML = diffHtml(poolDiff(p.data).diff);
+  });
+  const allConstructionData = poolDatasets.map(p=>p.data);
+  const cTotal = poolDatasets.reduce((s,p)=>s+poolTotal(p.data),0);
+  document.getElementById(prefix+'ConstructionTotal').textContent = yen(cTotal);
+  renderCatSubtotals(allConstructionData, prefix+'CatSubtotalsAll');
+  document.getElementById(prefix+'PoolDiffAll').innerHTML = diffHtml(poolDiffOf(allConstructionData).diff);
+
+  renderPool(advData, prefix+'AdvanceGroups');
+  const aTotal = poolTotal(advData);
+  document.getElementById(prefix+'AdvanceTotal').textContent = yen(aTotal);
+  renderCatSubtotals([advData], prefix+'AdvanceCatSubtotals');
+  document.getElementById(prefix+'AdvancePoolDiff').innerHTML = diffHtml(poolDiff(advData).diff);
+
+  const srcTotals = {};
+  allItems(advData).forEach(it=>{
+    if(it.cat==='削減候補' && it.off) return;
+    const key = it.source || 'その他';
+    srcTotals[key] = (srcTotals[key]||0) + it.amount;
+  });
+  document.getElementById(prefix+'AdvancePerPerson').textContent = yen(aTotal/6);
+  document.getElementById(prefix+'AdvancePerPersonOdagiri').textContent = yen((srcTotals['小田切立替']||0)/6);
+  document.getElementById(prefix+'AdvancePerPersonKarakana').textContent = yen((srcTotals['カラカナ口座立替']||0)/6);
+
+  poolDatasets.forEach(p=> attachItemListeners(p.data, renderAll));
+  attachItemListeners(advData, renderAll);
+
+  const karakanaTotal = parseAmt(document.getElementById(karakanaInputIds.total).value);
+  const toC = parseAmt(document.getElementById(karakanaInputIds.toConstruction).value);
+  const toA = parseAmt(document.getElementById(karakanaInputIds.toAdvance).value);
+  document.getElementById(prefix+'FundKarakanaC').textContent = yen(toC);
+  document.getElementById(prefix+'FundKarakanaA').textContent = yen(toA);
+
+  const allocBanner = document.getElementById(prefix+'AllocBanner');
+  if(toC + toA > karakanaTotal){
+    allocBanner.innerHTML = `<div class="banner">配分合計（${yen(toC+toA)}）が口座総額（${yen(karakanaTotal)}）を超えています。</div>`;
+  } else {
+    allocBanner.innerHTML = '';
+  }
+
+  renderLendersFundingTable(lendersArr, `#${prefix}LendersTable`);
+  const odagiri = parseAmt(document.getElementById(karakanaInputIds.odagiri).value);
+  const lendersTotal = lendersArr.reduce((s,l)=>s+l.loan,0);
+  const constructionFund = toC + lendersTotal;
+  const advanceFund = toA + odagiri;
+  document.getElementById(prefix+'ConstructionFundTotal').textContent = yen(constructionFund);
+  document.getElementById(prefix+'AdvanceFundTotal').textContent = yen(advanceFund);
+
+  const diffC = constructionFund - cTotal;
+  const diffA = advanceFund - aTotal;
+  const diffTotal = diffC + diffA;
+  const setResult = (elId, val) => {
+    const el = document.getElementById(elId);
+    el.textContent = yen(val);
+    el.className = 'value ' + (val>=0?'plus':'minus');
+  };
+  setResult(prefix+'ResultConstruction', diffC);
+  setResult(prefix+'ResultAdvance', diffA);
+  setResult(prefix+'ResultTotal', diffTotal);
+
+  document.getElementById(prefix+'DiffConstruction').innerHTML = diffHtml(poolDiffOf(allConstructionData).diff);
+  document.getElementById(prefix+'DiffAdvance').innerHTML = diffHtml(poolDiff(advData).diff);
+  document.getElementById(prefix+'DiffTotal').innerHTML = diffHtml(poolDiffOf(allConstructionData).diff + poolDiff(advData).diff);
+}
+
+function renderAll(){
+  // --- A1 ---
+  renderConstructionTab('a1', [
+    {data: ndrBaumData, containerId:'a1Groups1', totalId:'a1Pool1Total', catId:'a1CatSubtotals1', diffId:'a1PoolDiff1'},
+    {data: acData,      containerId:'a1Groups2', totalId:'a1Pool2Total', catId:'a1CatSubtotals2', diffId:'a1PoolDiff2'},
+    {data: amenitiesData, containerId:'a1Groups3', totalId:'a1Pool3Total', catId:'a1CatSubtotals3', diffId:'a1PoolDiff3'},
+  ], advanceData, {total:'a1KarakanaTotal', toConstruction:'a1KarakanaToConstruction', toAdvance:'a1KarakanaToAdvance', odagiri:'a1OdagiriAdvance'}, lenders1);
+
+  document.querySelectorAll('.ac-vendor-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      acVendor = btn.dataset.vendor;
+      if(acVendor === 'mitsuba' && !acPlan) acPlan = '6';
+      updateACItems();
+      renderAll();
+    });
+  });
+  document.querySelectorAll('.ac-plan-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      acPlan = btn.dataset.plan;
+      updateACItems();
+      renderAll();
+    });
+  });
+  attachLendersFundingListeners(()=>lenders1, (v)=>{lenders1=v;}, '#a1LendersTable');
+
+  // --- A2 ---
+  renderConstructionTab('a2', [
+    {data: shimazakiData, containerId:'a2Groups1', totalId:'a2Pool1Total', catId:'a2CatSubtotals1', diffId:'a2PoolDiff1'},
+    {data: amenitiesData, containerId:'a2Groups2', totalId:'a2Pool2Total', catId:'a2CatSubtotals2', diffId:'a2PoolDiff2'},
+  ], advanceData, {total:'a2KarakanaTotal', toConstruction:'a2KarakanaToConstruction', toAdvance:'a2KarakanaToAdvance', odagiri:'a2OdagiriAdvance'}, lenders2);
+  attachLendersFundingListeners(()=>lenders2, (v)=>{lenders2=v;}, '#a2LendersTable');
+
+  // --- B ---
+  document.getElementById('reflectA1Btn').classList.toggle('active', activeSource==='A1');
+  document.getElementById('reflectA2Btn').classList.toggle('active', activeSource==='A2');
+  const a1Pool1 = poolTotal(ndrBaumData), a1Pool2 = poolTotal(acData), a1Pool3 = poolTotal(amenitiesData);
+  const a1Total = a1Pool1 + a1Pool2 + a1Pool3;
+  const a2Pool1 = poolTotal(shimazakiData), a2Pool2 = poolTotal(amenitiesData);
+  const a2Total = a2Pool1 + a2Pool2;
+  document.getElementById('activeSourceLabel').textContent = activeSource ? `${activeSource}（${activeSource==='A1'?'ndr・BAUM':'島崎工務店'}）` : '未反映';
+  document.getElementById('activeSourceTotal').textContent = activeSource ? yen(activeSource==='A1' ? a1Total : a2Total) : '—';
+  const breakdownEl = document.getElementById('activeSourceBreakdown');
+  if(activeSource === 'A1'){
+    breakdownEl.textContent = `内訳｜プール１（ndr・BAUM）：${yen(a1Pool1)}　プール２（エアコン）：${yen(a1Pool2)}　共通（カラカナ手配備品）：${yen(a1Pool3)}`;
+  } else if(activeSource === 'A2'){
+    breakdownEl.textContent = `内訳｜プール１（島崎工務店）：${yen(a2Pool1)}　共通（カラカナ手配備品）：${yen(a2Pool2)}`;
+  } else {
+    breakdownEl.textContent = '';
+  }
+  const membersTotal = renderMembers();
+  const otherMonthlyTotal = renderOtherIncome();
+  const fixedTotal = renderFixed();
+  const net = membersTotal + otherMonthlyTotal - fixedTotal;
+  document.getElementById('rcMembers').textContent = yen(membersTotal);
+  document.getElementById('rcOther').textContent = yen(otherMonthlyTotal);
+  document.getElementById('rcFixed').textContent = yen(fixedTotal);
+  const rcNet = document.getElementById('rcNet');
+  rcNet.textContent = yen(net);
+  rcNet.style.color = net>=0 ? '#3F6B4F' : '#A6432B';
+
+  const startBalance = parseAmt(document.getElementById('startBalance').value);
+  const floor = parseAmt(document.getElementById('floorAmt').value);
+  renderRepaymentCards(net, startBalance, floor);
+
+  document.querySelectorAll('.member-amt').forEach(el=>{
+    el.addEventListener('change', e=>{ members[Number(e.target.dataset.idx)].amount = parseAmt(e.target.value); renderAll(); });
+  });
+  document.querySelectorAll('.other-amt').forEach(el=>{
+    el.addEventListener('change', e=>{ otherIncome[Number(e.target.dataset.idx)].amount = parseAmt(e.target.value); renderAll(); });
+  });
+  document.querySelectorAll('.other-startyear').forEach(el=>{
+    el.addEventListener('change', e=>{ otherIncome[Number(e.target.dataset.idx)].startYear = Number(e.target.value)||0; renderAll(); });
+  });
+  document.querySelectorAll('.other-startmonth').forEach(el=>{
+    el.addEventListener('change', e=>{ otherIncome[Number(e.target.dataset.idx)].startMonth = Number(e.target.value)||0; renderAll(); });
+  });
+  const galleryEl = document.querySelector('.gallery-amt');
+  if(galleryEl){ galleryEl.addEventListener('change', e=>{ galleryIncome.amount = parseAmt(e.target.value); renderAll(); }); }
+  document.querySelectorAll('.fixed-amt').forEach(el=>{
+    el.addEventListener('change', e=>{ fixedCosts[Number(e.target.dataset.idx)].amount = parseAmt(e.target.value); renderAll(); });
+  });
+
+  attachActiveLenderListeners();
+  scheduleSave();
+}
+
+['a1KarakanaTotal','a1KarakanaToConstruction','a1KarakanaToAdvance','a1OdagiriAdvance',
+ 'a2KarakanaTotal','a2KarakanaToConstruction','a2KarakanaToAdvance','a2OdagiriAdvance'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', renderAll);
+});
+document.getElementById('startBalance').addEventListener('change', renderAll);
+document.getElementById('floorAmt').addEventListener('change', renderAll);
+
+// ---------- Supabase連携 ----------
+const SUPABASE_URL = 'https://jdlwrbqlcdijunwziqcu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_s8VqwQvfFudFsjUYnZKiiA_8nk6j0fe';
+const SB_TABLE = 'karakana_scenarios_a1a2b';
+const USERS = ['licoyas','memini','GARAGE','kikiki'];
+
+let currentUser = null;
+let viewingSlot = null;
+let initialized = false;
+let saveTimer = null;
+let lastSnapshot = null;
+
+function getLocalUser(){ try { return localStorage.getItem('karakana_user_a1a2b'); } catch(e){ return null; } }
+function setLocalUser(u){ try { localStorage.setItem('karakana_user_a1a2b', u); } catch(e){} }
+
+async function sbGet(slot){
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${SB_TABLE}?slot=eq.${encodeURIComponent(slot)}&select=data,updated_at`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    if(!res.ok) return null;
+    const rows = await res.json();
+    return rows && rows[0] ? rows[0].data : null;
+  } catch(e){ return null; }
+}
+async function sbSave(slot, data){
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${SB_TABLE}`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify([{slot, data, updated_at: new Date().toISOString()}])
+    });
+    return res.ok;
+  } catch(e){ return false; }
+}
+
+function getFullState(){
+  return {
+    ndrBaum: allItems(ndrBaumData).map(it=>({id:it.id, cat:it.cat, amount:it.amount, off:!!it.off})),
+    ac: { vendor:acVendor, plan:acPlan, items: allItems(acData).map(it=>({id:it.id, cat:it.cat, amount:it.amount, off:!!it.off})) },
+    shimazaki: allItems(shimazakiData).map(it=>({id:it.id, cat:it.cat, amount:it.amount, off:!!it.off})),
+    amenities: allItems(amenitiesData).map(it=>({id:it.id, cat:it.cat, amount:it.amount, off:!!it.off})),
+    advance: allItems(advanceData).map(it=>({id:it.id, cat:it.cat, amount:it.amount, off:!!it.off})),
+    lenders1: lenders1.map(l=>({id:l.id, name:l.name, loan:l.loan})),
+    lenders2: lenders2.map(l=>({id:l.id, name:l.name, loan:l.loan})),
+    activeLenders: activeLenders.map(l=>({id:l.id, name:l.name, loan:l.loan, monthly:l.monthly})),
+    activeSource,
+    funding1: {
+      karakanaTotal: document.getElementById('a1KarakanaTotal').value,
+      karakanaToConstruction: document.getElementById('a1KarakanaToConstruction').value,
+      karakanaToAdvance: document.getElementById('a1KarakanaToAdvance').value,
+      odagiriAdvance: document.getElementById('a1OdagiriAdvance').value,
+    },
+    funding2: {
+      karakanaTotal: document.getElementById('a2KarakanaTotal').value,
+      karakanaToConstruction: document.getElementById('a2KarakanaToConstruction').value,
+      karakanaToAdvance: document.getElementById('a2KarakanaToAdvance').value,
+      odagiriAdvance: document.getElementById('a2OdagiriAdvance').value,
+    },
+    members: members.map(m=>({name:m.name, amount:m.amount})),
+    fixedCosts: fixedCosts.map(f=>({name:f.name, amount:f.amount})),
+    otherIncome: otherIncome.map(o=>({name:o.name, amount:o.amount, startYear:o.startYear, startMonth:o.startMonth})),
+    galleryIncome: {name:galleryIncome.name, amount:galleryIncome.amount},
+    repay: {
+      startBalance: document.getElementById('startBalance').value,
+      floorAmt: document.getElementById('floorAmt').value,
+    }
+  };
+}
+
+function applyFullState(state){
+  if(!state) return;
+  const map = (data) => { const m={}; allItems(data).forEach(it=>m[it.id]=it); return m; };
+  const ndrBaumMap = map(ndrBaumData);
+  (state.ndrBaum||[]).forEach(s=>{ const it=ndrBaumMap[s.id]; if(it){ it.cat=s.cat; it.amount=s.amount; it.off=s.off; } });
+  if(state.ac){
+    acVendor = state.ac.vendor || acVendor;
+    acPlan = state.ac.plan || acPlan;
+    const acMap = map(acData);
+    (state.ac.items||[]).forEach(s=>{ const it=acMap[s.id]; if(it){ it.cat=s.cat; it.amount=s.amount; it.off=s.off; } });
+    updateACItems();
+  }
+  const shimazakiMap = map(shimazakiData);
+  (state.shimazaki||[]).forEach(s=>{ const it=shimazakiMap[s.id]; if(it){ it.cat=s.cat; it.amount=s.amount; it.off=s.off; } });
+  const amenitiesMap = map(amenitiesData);
+  (state.amenities||[]).forEach(s=>{ const it=amenitiesMap[s.id]; if(it){ it.cat=s.cat; it.amount=s.amount; it.off=s.off; } });
+  const advanceMap = map(advanceData);
+  (state.advance||[]).forEach(s=>{ const it=advanceMap[s.id]; if(it){ it.cat=s.cat; it.amount=s.amount; it.off=s.off; } });
+
+  if(state.lenders1){ lenders1 = state.lenders1.map(l=>({id:l.id, name:l.name, loan:l.loan})); }
+  if(state.lenders2){ lenders2 = state.lenders2.map(l=>({id:l.id, name:l.name, loan:l.loan})); }
+  if(state.activeLenders){ activeLenders = state.activeLenders.map(l=>({id:l.id, name:l.name, loan:l.loan, monthly:l.monthly||0})); }
+  activeSource = state.activeSource || null;
+
+  if(state.funding1){ for(const k in state.funding1){ const el=document.getElementById('a1'+k.charAt(0).toUpperCase()+k.slice(1)); if(el) el.value = state.funding1[k]; } }
+  if(state.funding2){ for(const k in state.funding2){ const el=document.getElementById('a2'+k.charAt(0).toUpperCase()+k.slice(1)); if(el) el.value = state.funding2[k]; } }
+  if(state.members){ members = state.members.map(m=>({name:m.name, amount:m.amount})); }
+  if(state.fixedCosts){ fixedCosts = state.fixedCosts.map(f=>({name:f.name, amount:f.amount})); }
+  if(state.otherIncome){ otherIncome = state.otherIncome.map(o=>({name:o.name, amount:o.amount, startYear:o.startYear, startMonth:o.startMonth})); }
+  if(state.galleryIncome){ galleryIncome = {name:state.galleryIncome.name, amount:state.galleryIncome.amount}; }
+  if(state.repay){ for(const k in state.repay){ const el=document.getElementById(k); if(el) el.value = state.repay[k]; } }
+}
+
+function setSaveStatus(text){ document.getElementById('saveStatus').textContent = text; }
+
+function scheduleSave(){
+  if(!initialized || viewingSlot) return;
+  setSaveStatus('保存中…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    const ok = await sbSave(currentUser, getFullState());
+    setSaveStatus(ok ? '保存済み' : '保存に失敗しました');
+  }, 1200);
+}
+
+function applyViewLock(){
+  document.body.classList.toggle('viewing', !!viewingSlot);
+  const banner = document.getElementById('viewBanner');
+  banner.innerHTML = viewingSlot ? `<div class="view-banner">${viewingSlot}さんの内容を閲覧中（編集はできません。上のセレクトから「（自分の内容）」を選ぶと戻ります）</div>` : '';
+}
+
+document.getElementById('viewSelect').addEventListener('change', async (e)=>{
+  let target = e.target.value;
+  if(target === currentUser){ target = ''; e.target.value = ''; }
+  if(target === ''){
+    if(viewingSlot && lastSnapshot){ applyFullState(lastSnapshot); }
+    viewingSlot = null; applyViewLock(); renderAll();
+    return;
+  }
+  if(!viewingSlot){ lastSnapshot = getFullState(); }
+  viewingSlot = target;
+  const data = await sbGet(target);
+  if(data){ applyFullState(data); } else { alert(`${target}さんの保存データはまだありません。`); }
+  applyViewLock(); renderAll();
+});
+
+document.getElementById('switchUserBtn').addEventListener('click', ()=>{
+  document.getElementById('userGate').style.display = 'flex';
+});
+
+function todaySlot(){
+  const d = new Date();
+  return `確定版_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+function slotToDateLabel(slot){
+  const m = slot.match(/^確定版_(\d{4})(\d{2})(\d{2})$/);
+  if(!m) return slot;
+  return `${Number(m[2])}月${Number(m[3])}日保存版`;
+}
+
+document.getElementById('finalSaveBtn').addEventListener('click', async ()=>{
+  const slot = todaySlot();
+  setSaveStatus('確定版を保存中…');
+  const ok = await sbSave(slot, getFullState());
+  setSaveStatus(ok ? `${slotToDateLabel(slot)}として保存しました` : '確定版の保存に失敗しました');
+  if(document.getElementById('historyPanel').style.display !== 'none'){ renderHistoryList(); }
+});
+
+async function sbListHistory(){
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${SB_TABLE}?slot=like.確定版_*&select=slot,updated_at&order=slot.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    if(!res.ok) return [];
+    return await res.json();
+  } catch(e){ return []; }
+}
+
+async function renderHistoryList(){
+  const panel = document.getElementById('historyPanel');
+  panel.innerHTML = '読み込み中…';
+  const rows = await sbListHistory();
+  if(rows.length === 0){ panel.innerHTML = '<div style="font-size:12.5px;color:var(--ink-soft);">まだ確定版はありません。</div>'; return; }
+  panel.innerHTML = '';
+  rows.forEach(row=>{
+    const div = document.createElement('div');
+    div.className = 'history-row';
+    div.innerHTML = `
+      <span class="hdate">${slotToDateLabel(row.slot)}</span>
+      <button type="button" class="hview" data-slot="${row.slot}">見る</button>
+      <button type="button" class="himport" data-slot="${row.slot}">この内容を流し込む</button>
+      <button type="button" class="hprint" data-slot="${row.slot}">印刷／PDF</button>
+    `;
+    panel.appendChild(div);
+  });
+  panel.querySelectorAll('.hview').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const slot = btn.dataset.slot;
+      if(!viewingSlot){ lastSnapshot = getFullState(); }
+      viewingSlot = slot;
+      const data = await sbGet(slot);
+      if(data){ applyFullState(data); }
+      applyViewLock(); renderAll();
+      document.getElementById('viewBanner').innerHTML = `<div class="view-banner">${slotToDateLabel(slot)}を閲覧中（編集はできません。上のセレクトから「（自分の内容）」を選ぶと戻ります）</div>`;
+    });
+  });
+  panel.querySelectorAll('.himport').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const slot = btn.dataset.slot;
+      if(!confirm(`${slotToDateLabel(slot)}の内容を、あなたの編集中データに流し込みます。今の編集内容は上書きされます。よろしいですか？`)) return;
+      const data = await sbGet(slot);
+      if(!data){ alert('データの取得に失敗しました。'); return; }
+      viewingSlot = null; applyViewLock(); applyFullState(data); renderAll();
+      setSaveStatus(`${slotToDateLabel(slot)}を流し込みました`);
+    });
+  });
+  panel.querySelectorAll('.hprint').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const slot = btn.dataset.slot;
+      const data = await sbGet(slot);
+      if(!data){ alert('データの取得に失敗しました。'); return; }
+      if(!viewingSlot){ lastSnapshot = getFullState(); }
+      viewingSlot = slot;
+      applyFullState(data); applyViewLock(); renderAll();
+      setTimeout(()=> window.print(), 200);
+    });
+  });
+}
+
+document.getElementById('historyToggleBtn').addEventListener('click', ()=>{
+  const panel = document.getElementById('historyPanel');
+  const show = panel.style.display === 'none';
+  panel.style.display = show ? 'block' : 'none';
+  if(show){ renderHistoryList(); }
+});
+
+async function selectUser(u){
+  currentUser = u;
+  setLocalUser(u);
+  document.getElementById('currentUserLabel').textContent = u;
+  document.getElementById('finalSaveBtn').style.display = (u === 'GARAGE') ? 'inline-block' : 'none';
+  document.getElementById('userGate').style.display = 'none';
+  initialized = false;
+  setSaveStatus('読み込み中…');
+  const data = await sbGet(u);
+  if(data){ applyFullState(data); }
+  renderAll();
+  initialized = true;
+  setSaveStatus(data ? '前回の続きを読み込みました' : '新規です（まだ保存データがありません）');
+}
+
+document.querySelectorAll('.gate-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> selectUser(btn.dataset.user));
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+const savedUser = getLocalUser();
+if(savedUser && USERS.includes(savedUser)){
+  selectUser(savedUser);
+} else {
+  renderAll();
+}
+</script>
+</body>
+</html>
